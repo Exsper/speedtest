@@ -95,6 +95,7 @@ class KeyRecorder {
     }
 
     calOffset(bpm, referenceCount = 10) {
+        if (this.timeLine.length <=0) throw "没有击键记录!";
         if (this.timeLine.length < referenceCount || referenceCount <= 1) referenceCount = this.timeLine.length;
         const standardDeltaTime = (bpm) ? 15000 / bpm : (this.timeLine[referenceCount - 1].startTime - this.timeLine[0].startTime) / (referenceCount - 1);
         this.checkbpm = (bpm) ? bpm: parseInt(15000 / standardDeltaTime);

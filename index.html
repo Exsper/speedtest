@@ -169,15 +169,21 @@
             };
             keyRecorder.start();
             setTimeout(() => {
-                document.onkeydown = undefined;
-                document.onkeyup = undefined;
-                keyRecorder = ($("#nobpm").is(':checked')) ? keyRecorder.stop().calOffset() : keyRecorder.stop().calOffset(bpm);
-                $("#bpm").val(keyRecorder.checkbpm);
-                const timeline = keyRecorder.getTimeLine();
-                drawChart(timeline);
-                showKeys(timeline, key1Name, key2Name)
-                $("#info").text("计时结束")
-                $("#start").removeAttr("disabled");
+                try {
+                    document.onkeydown = undefined;
+                    document.onkeyup = undefined;
+                    keyRecorder = ($("#nobpm").is(':checked')) ? keyRecorder.stop().calOffset() : keyRecorder.stop().calOffset(bpm);
+                    $("#bpm").val(keyRecorder.checkbpm);
+                    const timeline = keyRecorder.getTimeLine();
+                    drawChart(timeline);
+                    showKeys(timeline, key1Name, key2Name)
+                    $("#info").text("计时结束")
+                    $("#start").removeAttr("disabled");
+                }
+                catch (ex) {
+                    $("#info").text(ex);
+                    $("#start").removeAttr("disabled");
+                }
             }, testTime);
 
         });
