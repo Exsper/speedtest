@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<noscript>Your browser does not support JavaScript!</noscript>
+
+<head>
+    <title>手速和稳定测试</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="shortcut icon" href="./favicon.ico" />
+    <script type="text/javascript" src="./common/js/jquery.min.js"></script>
+    <script type="text/javascript" src="./common/js/audio.min.js"></script>
+    <script type="text/javascript" src="./src/KeyRecorder.js"></script>
+    <style>
+        .keypress-ok {
+            border: 1px solid;
+            font-size: 20px;
+            width: 80px;
+            height: 20px;
+            line-height: 20px;
+            background-color: green;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .keypress-warning {
+            border: 1px solid;
+            font-size: 20px;
+            width: 80px;
+            height: 20px;
+            line-height: 20px;
+            background-color: red;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .keyup {
+            border: 1px solid;
+            font-size: 20px;
+            width: 80px;
+            height: 20px;
+            line-height: 20px;
+            background-color: white;
+            color: black;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <span>key1：</span><select id="key1"></select>
+    <span>key2：</span><select id="key2"></select>
+    <span>bpm：</span><input id="bpm" type="number" min="15" max="500" step="5" value="180" disabled />
+    <input type="checkbox" id="nobpm" checked><span>不指定bpm</span>
+    <span>测试时间：</span><input id="testminute" type="number" min="1" max="60" step="1" value="10" /><span>秒</span>
+    <button id="start" disabled="disabled">开始吧！</button>
+    <span id="info"></span>
+    <br>
+    <br>
+    <div id="result">
+        <table>
+            <tr>
+                <td>
+                    <div id="chart-offset" style="width: 600px; height: 400px; border: 1px solid;"></div>
+                </td>
+                <td>
+                    <div id="chart-totalbpm" style="width: 600px; height: 400px; border: 1px solid;"></div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div id="chart-duration" style="width: 600px; height: 400px; border: 1px solid;"></div>
+                </td>
+                <td>
+                    <div id="chart-realtimebpm" style="width: 600px; height: 400px; border: 1px solid;"></div>
+                </td>
+            </tr>
+        </table>
+        <div style="border: 1px solid; position: absolute; min-width:120px; min-height:100px; top:50px; right:10px;">
+            <div style="border: 1px solid; width: 100%; text-align: center;">点击详情</div>
+            <table id="resultkeys"> </table>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        $("#nobpm").change(() => {
+            if ($("#nobpm").is(':checked')) $("#bpm").attr("disabled", true);
+            else $('#bpm').removeAttr('disabled');
+        });
+        [$("#key1"), $("#key2")].forEach(($select) => {
+            const KEYLIST = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            KEYLIST.split("").forEach((char) => {
+                $select.append(`<option value=${char.charCodeAt()} style='width: 100px'>${char}</option>`);
+            });
+        });
+        $("#key1").val(90); // Z
+        $("#key2").val(88); // X
+    </script>
+
+    <script type="text/javascript">
+
+        function drawChart(timeline) {
+            const newchart = new TimeLineChart(timeline);
+            const offsetData = newchart.offsetChart();
+            const durationData = newchart.durationChart();
+            const totalbpm = newchart.averageBpmChart();
+            const realtimebpm = newchart.realTimeBpmChart();
+            Plotly.newPlot('chart-offset', [offsetData.data], offsetData.layout, { scrollZoom: true });
+            Plotly.newPlot('chart-duration', [durationData.data], durationData.layout, { scrollZoom: true });
+            Plotly.newPlot('chart-totalbpm', [totalbpm.data], totalbpm.layout, { scrollZoom: true });
+            Plotly.newPlot('chart-realtimebpm', [realtimebpm.data], realtimebpm.layout, { scrollZoom: true });
+        }
+
+        function showKeys(timeline, key1Name, key2Name) {
+            const $table = $("#resultkeys");
+            $table.empty();
+            let preKey;
+            timeline.map((keyRecord) => {
+                const hitKey1 = (keyRecord.keyName === key1Name);
+                const key1Class = (hitKey1) ? ((preKey === keyRecord.keyName) ? "keypress-warning" : "keypress-ok") : "keyup";
+                const hitKey2 = (keyRecord.keyName === key2Name);
+                const key2Class = (hitKey2) ? ((preKey === keyRecord.keyName) ? "keypress-warning" : "keypress-ok") : "keyup";
+                preKey = keyRecord.keyName;
+                const ltr = $("<tr>");
+                let td = $("<td>").appendTo(ltr);
+                $("<div>", { class: key1Class, text: key1Name }).appendTo(td);
+                td = $("<td>").appendTo(ltr);
+                $("<div>", { class: key2Class, text: key2Name }).appendTo(td);
+                ltr.appendTo($table);
+            });
+        }
+
+        $("#start").click(function () {
+            $("#info").text("请开始击打，计时结束会自动生成结果")
+            $("#start").attr("disabled", true);
+            const key1 = parseInt($("#key1").val());
+            const key1Name = $("#key1 option[value=" + key1 + "]").text();
+            let key1Press = false;
+            const key2 = parseInt($("#key2").val());
+            const key2Name = $("#key2 option[value=" + key2 + "]").text();
+            let key2Press = false;
+            let keyRecorder = new KeyRecorder([key1Name, key2Name]);
+            const bpm = parseInt($("#bpm").val());
+            const testTime = parseInt($("#testminute").val()) * 1000;
+            document.onkeydown = function (event) {
+                const keyCode = event.keyCode;
+                if (keyCode === key1 && !key1Press) {
+                    key1Press = true;
+                    keyRecorder.keyPress(key1Name);
+                }
+                else if (keyCode === key2 && !key2Press) {
+                    key2Press = true;
+                    keyRecorder.keyPress(key2Name);
+                }
+            };
+            document.onkeyup = function (event) {
+                const keyCode = event.keyCode;
+                if (keyCode === key1) {
+                    key1Press = false;
+                    keyRecorder.keyUp(key1Name);
+                }
+                else if (keyCode === key2) {
+                    key2Press = false;
+                    keyRecorder.keyUp(key2Name);
+                }
+                return true;
+            };
+            keyRecorder.start();
+            setTimeout(() => {
+                document.onkeydown = undefined;
+                document.onkeyup = undefined;
+                keyRecorder = ($("#nobpm").is(':checked')) ? keyRecorder.stop().calOffset() : keyRecorder.stop().calOffset(bpm);
+                $("#bpm").val(keyRecorder.checkbpm);
+                const timeline = keyRecorder.getTimeLine();
+                drawChart(timeline);
+                showKeys(timeline, key1Name, key2Name)
+                $("#info").text("计时结束")
+                $("#start").removeAttr("disabled");
+            }, testTime);
+
+        });
+    </script>
+
+    <script type="text/javascript">
+        function ClickFileButton() {
+            var musicfileurl = document.getElementById('fileUrlTextbox').value.replace(/\"/g, "");
+            $('#audioframe').attr('src', "");
+            document.getElementById('audio-div').innerHTML = "";
+            let as = [];
+            var audio = $('<audio loop></audio>', { id: 'audioframe' }).appendTo($('#audio-div')).attr('src', musicfileurl)[0];
+            var testAS = audiojs.create(audio);
+            as.push(testAS);
+        }
+    </script>
+
+    <div id="audio-frame" style="position:absolute; bottom:2%; left:1%">
+        <input type="text" style="width:400px;" id="fileUrlTextbox" placeholder="您也可以跟着自定义音乐来击打，在这里输入文件路径" />
+        <input type="button" value="打开音乐" onclick="ClickFileButton()" />
+        <div id="audio-div"></div>
+    </div>
+
+    <script type="text/javascript">
+        function downloadJSAtOnload() {
+            $("#start").text("加载中，请稍等...");
+            let element = document.createElement("script");
+            element.src = "./common/js/plotly-latest.min.js";
+            element.onload = function () {
+                $("#start").removeAttr("disabled");
+                $("#start").text("开始吧！");
+            }
+
+            document.body.appendChild(element);
+        }
+        if (window.addEventListener)
+            window.addEventListener("load", downloadJSAtOnload, false);
+        else if (window.attachEvent)
+            window.attachEvent("onload", downloadJSAtOnload);
+        else window.onload = downloadJSAtOnload;
+
+    </script>
+
+</body>
+
+</html>
