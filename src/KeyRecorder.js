@@ -144,7 +144,7 @@ class TimeLineChart {
         const data = { x, y, "type": "scatter" };
         const layout = {
             xaxis: { title: { text: "hit(ms)" } },
-            yaxis: { title: { text: "按键时长" } }
+            yaxis: { title: { text: "按键时长(ms)" } }
         };
         return { data, layout };
     }
