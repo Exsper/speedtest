@@ -96,8 +96,27 @@
                 $select.append(`<option value=${char.charCodeAt()} style='width: 100px'>${char}</option>`);
             });
         });
-        $("#key1").val(90); // Z
-        $("#key2").val(88); // X
+
+        function saveItems() {
+            window.localStorage.setItem("key1", $("#key1").val());
+            window.localStorage.setItem("key2", $("#key2").val());
+            window.localStorage.setItem("bpm", $("#bpm").val());
+            window.localStorage.setItem("nobpm", $("#nobpm").is(':checked'));
+            window.localStorage.setItem("testminute", $("#testminute").val());
+        }
+
+        function loadItems() {
+            $("#key1").val(window.localStorage.getItem("key1") || 90); // Z
+            $("#key2").val(window.localStorage.getItem("key2") || 88); // X
+            $("#bpm").val(window.localStorage.getItem("bpm") || 180);
+            if (window.localStorage.getItem("nobpm") === "false") {
+                $("#nobpm").attr("checked", false);
+                $('#bpm').removeAttr('disabled');
+            }
+            $("#testminute").val(window.localStorage.getItem("testminute") || 10);
+        }
+
+        loadItems();
     </script>
 
     <script type="text/javascript">
@@ -134,6 +153,7 @@
         }
 
         $("#start").click(function () {
+            saveItems();
             $("#info").text("请开始击打，计时结束会自动生成结果")
             $("#start").attr("disabled", true);
             const key1 = parseInt($("#key1").val());

@@ -157,6 +157,8 @@ class TimeLineChart {
             const bpm = (index < 1) ? 0 : (15000 * index / (keyRecord.startTime - this.timeLine[0].startTime));
             y.push(bpm);
         });
+        x.splice(0,1);
+        y.splice(0,1);
         const data = { x, y, "type": "scatter" };
         const layout = {
             xaxis: { title: { text: "hit(ms)" } },
@@ -173,6 +175,8 @@ class TimeLineChart {
             const bpm = (index < 1) ? 0 : (15000 / (keyRecord.startTime - this.timeLine[index - 1].startTime));
             y.push(bpm);
         });
+        x.splice(0,1);
+        y.splice(0,1);
         const data = { x, y, "type": "scatter" };
         const layout = {
             xaxis: { title: { text: "hit(ms)" } },
