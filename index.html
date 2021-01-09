@@ -78,7 +78,8 @@
                 </td>
             </tr>
         </table>
-        <div style="border: 1px solid; position: absolute; min-width:120px; min-height:100px; max-height: 80%; top:50px; right:10px; overflow-y: auto; overflow-x: hidden;">
+        <div
+            style="border: 1px solid; position: absolute; min-width:120px; min-height:100px; max-height: 80%; top:50px; right:10px; overflow-y: auto; overflow-x: hidden;">
             <div style="border: 1px solid; width: 100%; text-align: center;">点击详情</div>
             <table id="resultkeys"> </table>
         </div>
@@ -190,21 +191,33 @@
     </script>
 
     <script type="text/javascript">
+        /**
+         * 判断字符串是否为正整数
+         * @param {String} s 
+         * @returns {Boolean} 是正整数
+         */
+        function checkInt(s) {
+            var re = /^\d+$/;
+            return (re.test(s));
+        }
+
         function ClickFileButton() {
-            var musicfileurl = document.getElementById('fileUrlTextbox').value.replace(/\"/g, "");
+            let musicfileurl = document.getElementById('fileUrlTextbox').value.replace(/\"/g, "");
+            if (checkInt(musicfileurl)) musicfileurl = `https://b.ppy.sh/preview/${musicfileurl}.mp3`;
             $('#audioframe').attr('src', "");
             document.getElementById('audio-div').innerHTML = "";
             let as = [];
-            var audio = $('<audio loop></audio>', { id: 'audioframe' }).appendTo($('#audio-div')).attr('src', musicfileurl)[0];
-            var testAS = audiojs.create(audio);
+            let audio = $('<audio loop></audio>', { id: 'audioframe' }).appendTo($('#audio-div')).attr('src', musicfileurl)[0];
+            let testAS = audiojs.create(audio);
             as.push(testAS);
         }
     </script>
 
-    <div id="audio-frame" style="position:absolute; bottom:2%; left:1%">
-        <input type="text" style="width:400px;" id="fileUrlTextbox" placeholder="您也可以跟着自定义音乐来击打，在这里输入文件路径" />
+    <div id="audio-frame" style="position:absolute; bottom:1%; left:1%">
+        <input type="text" style="width:500px;" id="fileUrlTextbox"
+            placeholder="您也可以跟着自定义音乐来击打，在这里输入URL路径或者beatmapSet ID" />
         <input type="button" value="打开音乐" onclick="ClickFileButton()" />
-        <div id="audio-div"></div>
+        <div id="audio-div" style="float: right; padding-left: 20px;"></div>
     </div>
 
     <script type="text/javascript">
