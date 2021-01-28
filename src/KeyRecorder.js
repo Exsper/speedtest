@@ -53,6 +53,8 @@ class KeyRecorder {
             this.pressTimeLines[keyName] = new PressTimeLine(keyName);
         });
         this.checkbpm = 0;
+        this.trueTime = 0;
+        this.keyCount = 0;
     }
 
     start() {
@@ -76,6 +78,7 @@ class KeyRecorder {
             if (newKeyRecords) this.timeLine.push(...newKeyRecords);
         });
         this.timeLine.sort((a, b) => a.startTime - b.startTime);
+        this.keyCount = this.timeLine.length;
         return this;
     }
 
@@ -85,6 +88,7 @@ class KeyRecorder {
         this.timeLine.map((keyRecord) => {
             keyRecord.adjustTime(moveTime);
         });
+        this.trueTime = this.timeLine[this.timeLine.length - 1].startTime - this.timeLine[0].startTime;
         return this;
     }
 
@@ -95,10 +99,10 @@ class KeyRecorder {
     }
 
     calOffset(bpm, referenceCount = 10) {
-        if (this.timeLine.length <=0) throw "没有击键记录!";
+        if (this.timeLine.length <= 0) throw "没有击键记录!";
         if (this.timeLine.length < referenceCount || referenceCount <= 1) referenceCount = this.timeLine.length;
         const standardDeltaTime = (bpm) ? 15000 / bpm : (this.timeLine[referenceCount - 1].startTime - this.timeLine[0].startTime) / (referenceCount - 1);
-        this.checkbpm = (bpm) ? bpm: parseInt(15000 / standardDeltaTime);
+        this.checkbpm = (bpm) ? bpm : parseInt(15000 / standardDeltaTime);
         const referenceOffsets = this.timeLine.slice(0, referenceCount).map((keyRecord, index) => keyRecord.startTime - standardDeltaTime * index);
         const averageOffset = parseInt(referenceOffsets.reduce((accumulator, currentValue) => accumulator + currentValue) / referenceCount);
         this.resetOffset(-averageOffset);
@@ -157,8 +161,8 @@ class TimeLineChart {
             const bpm = (index < 1) ? 0 : (15000 * index / (keyRecord.startTime - this.timeLine[0].startTime));
             y.push(bpm);
         });
-        x.splice(0,1);
-        y.splice(0,1);
+        x.splice(0, 1);
+        y.splice(0, 1);
         const data = { x, y, "type": "scatter" };
         const layout = {
             xaxis: { title: { text: "hit(ms)" } },
@@ -175,8 +179,8 @@ class TimeLineChart {
             const bpm = (index < 1) ? 0 : (15000 / (keyRecord.startTime - this.timeLine[index - 1].startTime));
             y.push(bpm);
         });
-        x.splice(0,1);
-        y.splice(0,1);
+        x.splice(0, 1);
+        y.splice(0, 1);
         const data = { x, y, "type": "scatter" };
         const layout = {
             xaxis: { title: { text: "hit(ms)" } },

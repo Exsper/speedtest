@@ -197,8 +197,10 @@
                     $("#bpm").val(keyRecorder.checkbpm);
                     const timeline = keyRecorder.getTimeLine();
                     drawChart(timeline);
-                    showKeys(timeline, key1Name, key2Name)
-                    $("#info").text("计时结束")
+                    showKeys(timeline, key1Name, key2Name);
+                    const trueTime = (keyRecorder.trueTime / 1000).toFixed(2);
+                    const keyCount = keyRecorder.keyCount;
+                    $("#info").text("计时结束，在 "+trueTime+" 秒内共记录按键 "+keyCount+" 次");
                     $("#start").removeAttr("disabled");
                 }
                 catch (ex) {
